@@ -1,0 +1,4 @@
+ADAFRUIT GFX LIBRARY - v1.3.4
+ESP8266 and ESP32 Oled Driver for SSD1306 - v4.0.0
+ESP8266 by ESP8266 Community - v2.4.2
+Keypad by Mark Stanley, Alexander Brevig - v3.1.1

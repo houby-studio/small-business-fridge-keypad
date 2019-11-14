@@ -1,0 +1,4 @@
+#define hacek_width 3
+#define hacek_height 2
+static unsigned char hacek_bits[] = {
+   0x05, 0x02 };
