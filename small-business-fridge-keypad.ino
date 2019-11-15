@@ -15,6 +15,7 @@
 */
 #include <SSD1306Wire.h>
 #include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
 #include <WiFiClient.h>
 #include <Keypad.h>
 #include <Ticker.h>
@@ -23,8 +24,8 @@
 #include "animations/pikachu/pikachu.h"
 
 // WiFi connection variables - SSID and Password to your WiFi and IpAddress string, which will be overridden when DHCP assigns IP address to device
-const char* ssid     = "SINDICI";
-const char* password = "Beletin57";
+const char* ssid     = "DEV";
+const char* password = "Heslo321.";
 String IpAddressStr = "127.0.0.1"; //Fallback if no IP address assigned - shouldn't really ever get to this scenario tho
 
 // Keypad variables and initialization - depends on keypad. In this case its Adafruit 4x3 Keypad
@@ -42,7 +43,7 @@ byte colPins[COLS] = {D2, D0, D6}; // Connect to the column pinouts of the keypa
 Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS); 
 
 // Website variables
-const char* host = "posli.prdel.cloud";
+const char* host = "lednice.prdelka.eu";
 const int httpPort = 80;
 String defaultApiUrl = "/weebservices/iotlednice/api/";
 String apiUrl = defaultApiUrl;
@@ -112,10 +113,7 @@ void gameMenuPress(char menuKeyPress) {
         snakeGame();
         break;
       case 2 : 
-        //pongGame();
-        break;
-      case 3 : 
-        wolfGame();
+        //highScores();
         break;
       default :
         break;
@@ -128,7 +126,7 @@ void gameMenuPress(char menuKeyPress) {
     }
   }
   if (menuKeyPress == '8') {
-    if (gameMenuSelect != 3) {
+    if (gameMenuSelect != 2) {
       gameMenuSelect++;
       gameMenu();
     }
@@ -145,6 +143,39 @@ char easterEgg() {
   eventCustomKey = playPikachuAnimation();
   screenStateEasterEgg = false;
   return eventCustomKey;
+}
+
+String makeHttpRequest() {
+  std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
+  client->setInsecure();
+  HTTPClient https;
+  String payload;
+  if (https.begin(*client, "https://lednice.prdelka.eu/api/customerName?customer=" + customerNumber)) {  // HTTPS
+  
+    Serial.print("[HTTPS] GET...\n");
+    // start connection and send HTTP header
+    https.addHeader("apiKey", "test");
+    int httpCode = https.GET();
+  
+    // httpCode will be negative on error
+    if (httpCode > 0) {
+      // HTTP header has been send and Server response header has been handled
+      Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
+  
+      // file found at server
+      if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
+        payload = https.getString();
+        Serial.println(payload);
+      }
+    } else {
+      Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
+    }
+    https.end();
+    return payload;
+  } else {
+      Serial.printf("[HTTPS] Unable to connect\n");
+      return "Chyba komunikace";
+  }
 }
 
 void updateShoppingScreen(char pressedKey) {
@@ -164,16 +195,21 @@ void updateShoppingScreen(char pressedKey) {
   if (customerMode == true) {
     if (pressedKey == '*') {
       if (customerNumber == "") {
-        // Empty customer, cannot proceed
+        // Empty customer, cannot proceed     
       } else {
         customerMode = false;
+        display.clear();
+        display.setFont(ArialMT_Plain_16);
+        display.setTextAlignment(TEXT_ALIGN_CENTER);
+        display.drawString(64, 20, "Probíhá HTTP dotaz.");
+        display.display();
         display.clear();
         display.setFont(ArialMT_Plain_16);
         display.setTextAlignment(TEXT_ALIGN_CENTER);
         display.drawString(64, 0, "Zvolte ID produktu");
         display.setFont(ArialMT_Plain_10);
         display.setTextAlignment(TEXT_ALIGN_LEFT);
-        display.drawString(0, 36, "Zákazník: " + customerNumber);
+        display.drawString(0, 36, "Zákazník: " + makeHttpRequest());
         display.drawString(0, 48, "Storno stiskem    #");
         display.display();
       }

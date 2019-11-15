@@ -154,7 +154,11 @@ void snakeInput() {
   if (key == '8') dir = DOWN;
   if (key == '4') dir = LEFT;
   if (key == '6') dir = RIGHT;
-  if (key == '#') snakeGameOver = true;gameOver();
+  if (key == '#') 
+  {
+    snakeGameOver = true;
+    gameOver();
+  }
 }
 
 void snakeLogic() {

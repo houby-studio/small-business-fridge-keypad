@@ -70,7 +70,6 @@ void defaultScreenInfo() {
     display.drawXbm(13, 51, hacek_width, hacek_height, hacek_bits);
     display.drawString(64, 48, "císlo zákazníka");
     screenStateAlternate = false;
-    //playPikachuAnimation();
   }
   display.display();
 }
@@ -81,25 +80,17 @@ void gameMenu() {
   display.setTextAlignment(TEXT_ALIGN_CENTER);
   display.drawString(64, 0, "Tajné herní menu");
   display.setTextAlignment(TEXT_ALIGN_LEFT);
-  if (gameMenuSelect == 1) {
-    display.drawString(5, 12, ">");
-    display.drawString(10, 12, "Snake");
-  } else {
-    display.drawString(10, 12, "Snake");
-  }
-  if (gameMenuSelect == 2) {
-    display.drawString(5, 24, ">");
-    display.drawString(10, 24, "Pong");
-  } else {
-    display.drawString(10, 24, "Pong");
-  }
-  if (gameMenuSelect == 3) {
-    display.drawString(5, 36, ">");
-    display.drawString(10, 36, "Nu pogodi");
-  } else {
-    display.drawString(10, 36, "Nu pogodi");
-  }
+  if (gameMenuSelect == 1) display.drawString(5, 12, ">");
+  display.drawString(10, 12, "Spustit hru Snake");
+  if (gameMenuSelect == 2) display.drawString(5, 24, ">");
+  display.drawString(10, 24, "High scores");
   display.setTextAlignment(TEXT_ALIGN_CENTER);
-  display.drawString(64, 48, "2 a 8 pohyb v menu");
+  //display.drawString(64, 36, "Storno stiskem     #");
+  //display.drawString(64, 36, "Spust *       Storno #");
+  display.drawString(64, 36, "Potvrdit           Návrat #");
+  display.drawString(64, 48, "2 / 8      pohyb v menu");
+  display.setFont(ArialMT_Plain_24);
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.drawString(49, 36, "*");
   display.display();
 }
