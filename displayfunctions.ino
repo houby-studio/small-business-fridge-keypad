@@ -94,3 +94,69 @@ void gameMenu() {
   display.drawString(49, 36, "*");
   display.display();
 }
+
+void drawHttpRequest() {
+  display.clear();
+  display.setFont(ArialMT_Plain_16);
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.drawString(64, 20, "HTTP dotaz");
+  display.display();
+}
+
+void drawChooseProduct(bool makeHttpRequest) {
+  display.clear();
+  display.setFont(ArialMT_Plain_16);
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.drawString(64, 0, "Zvolte ID produktu");
+  display.setFont(ArialMT_Plain_10);
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.drawString(0, 48, "Storno stiskem    #");
+  if (makeHttpRequest) {
+    display.drawString(0, 36, "Zákazník: ");
+    display.drawString(48, 36, getCustomerName());
+  } else {
+    display.drawString(0, 36, "Zákazník: " + customerNumber);
+  }
+  display.display();
+}
+
+void drawEnterCustomerNumber() {
+  display.clear();
+  display.setFont(ArialMT_Plain_16);
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.drawString(64, 0, "ID zákazníka");
+  display.setTextAlignment(TEXT_ALIGN_LEFT);
+  display.drawString(0, 18, customerNumber);
+  display.setFont(ArialMT_Plain_10);
+  display.drawString(0, 36, "Potvrd' stiskem");
+  display.setFont(ArialMT_Plain_24);
+  display.drawString(77, 36, "*");
+  display.setFont(ArialMT_Plain_10);
+  display.drawString(0, 48, "Storno stiskem    #");
+  display.display();  
+}
+
+void drawWifiConnected() {
+  display.clear();
+  display.setFont(ArialMT_Plain_24);
+  display.drawString(64, 20, "Connected!");
+  display.display();
+}
+
+void drawCustomerNotFound() {
+  display.clear();
+  display.setFont(ArialMT_Plain_16);
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.drawString(64, 10, "Zákazník");
+  display.drawString(64, 30, "nenalezen");
+  display.display();
+}
+
+void drawTerminatingError() {
+  display.clear();
+  display.setFont(ArialMT_Plain_16);
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.drawString(64, 10, "Hasta");
+  display.drawString(64, 30, "la vista");
+  display.display();
+}

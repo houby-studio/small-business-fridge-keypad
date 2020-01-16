@@ -43,17 +43,17 @@ byte colPins[COLS] = {D2, D0, D6}; // Connect to the column pinouts of the keypa
 Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS); 
 
 // Website variables
-const char* host = "lednice.prdelka.eu";
+const String host = "lednice.prdelka.eu";
 const int httpPort = 80;
-String defaultApiUrl = "/weebservices/iotlednice/api/";
-String apiUrl = defaultApiUrl;
-String defaultSnakeUrl = "/weebservices/iotlednice/snake/";
-String snakeUrl = defaultSnakeUrl;
+const String getCustomerNameApi = "/api/customerName?customer=";
+const String postShopOrderApi = "/api/keypadOrder";
+const String getSnakeHighscoresApi = "/api/snakeHighscores";
+const String postSnakeHighscoresApi = "/api/snakeHighscores";
+const String apiSecret = "secret";
 
-// Easter egg animations array. When easter egg is supposed to be played, one of the following is randomly chosen
-void (* easterEggArray [])() = {};
-// Games idea - snake, tetris, piskvorky, pong, space invaders
-// Herni eggy - mario, pokemon, undertale, - also press 3x 0 or other code to enter menu to choose game
+// Easter egg animations array. When easter egg is supposed to be played, one of the following is randomly chosen - DEPRACATED, ONLY ONE GAME AVAILABLE RIGHT NOW
+// void (* easterEggArray [])() = {}; 
+// Games idea - snake, tetris, pong, space invaders
 
 // Ticker to control display change changes. One for alternating default screen, second for easter egg animations and third one for timeout for purchasing.
 Ticker displayEasterEgg;
@@ -63,9 +63,9 @@ Ticker shoppingTimeout;
 // Booleans holding information about display state
 bool screenStateEasterEgg = false;            // Info if easter egg is being played. If that is the case, alternating screen cannot override it.
 bool screenStateEasterEggShouldPlay = false;  // When displayEasterEgg ticker ticks, it marks this variable as true so next time loop checks, it plays easter egg (unless someone is shopping).
-bool screenStateAlternate = false;            // Info about which state default screen is in. So next time screen is suppsoed to change, it displays the other one.
+bool screenStateAlternate = false;            // Info about which state default screen is in. So next time screen is supposed to change, it displays the other one.
 bool screenStateShouldChange = false;         // When displayAlternateDefault ticker ticks, it marks this variable as true so next time loop checks, it changes to other default screen (unless someone is shopping or easter egg is playing).
-bool screenStateShopping = false;             //  Info whether or not someone is shopping. Prevents all other kinds of stuff happening on screen.
+bool screenStateShopping = false;             // Info whether or not someone is shopping. Prevents all other kinds of stuff happening on screen.
 
 // Sources => Examples > ESP8266 and ESP32 Oled Driver for SSD1306 display > SSD1306SimpleDemo
 // ##### START LED configure part #####
@@ -80,6 +80,15 @@ bool customerMode = true;
 // Secret variables
 bool gameMenuMode = false;
 int gameMenuSelect = 1;
+
+void resetState() {
+  screenStateShopping = false;
+  customerNumber = "";
+  productNumber = "";
+  customerMode = true;
+  screenStateEasterEggShouldPlay = false;
+  defaultScreenInfo();
+}
 
 // Once every couple minutes ticker marks easter egg to play.
 void changeEasterEggState() {
@@ -97,6 +106,7 @@ void changeDefaultState() {
   }
 }
 
+// Handles control in secret game menu
 void gameMenuPress(char menuKeyPress) {
   if (menuKeyPress == '#') {
     screenStateShopping = false;
@@ -136,99 +146,49 @@ void gameMenuPress(char menuKeyPress) {
 // If current display state is in default screen and easter egg is marked for play, display easter egg
 char easterEgg() {
   char eventCustomKey;
-  if (screenStateShopping == true) {
-    //return;
-  }
   screenStateEasterEgg = true;
   eventCustomKey = playPikachuAnimation();
   screenStateEasterEgg = false;
   return eventCustomKey;
 }
 
-String makeHttpRequest() {
-  std::unique_ptr<BearSSL::WiFiClientSecure>client(new BearSSL::WiFiClientSecure);
-  client->setInsecure();
-  HTTPClient https;
-  String payload;
-  if (https.begin(*client, "https://lednice.prdelka.eu/api/customerName?customer=" + customerNumber)) {  // HTTPS
-  
-    Serial.print("[HTTPS] GET...\n");
-    // start connection and send HTTP header
-    https.addHeader("apiKey", "test");
-    int httpCode = https.GET();
-  
-    // httpCode will be negative on error
-    if (httpCode > 0) {
-      // HTTP header has been send and Server response header has been handled
-      Serial.printf("[HTTPS] GET... code: %d\n", httpCode);
-  
-      // file found at server
-      if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
-        payload = https.getString();
-        Serial.println(payload);
-      }
-    } else {
-      Serial.printf("[HTTPS] GET... failed, error: %s\n", https.errorToString(httpCode).c_str());
-    }
-    https.end();
-    return payload;
-  } else {
-      Serial.printf("[HTTPS] Unable to connect\n");
-      return "Chyba komunikace";
-  }
-}
-
+// Main keypad key handler
 void updateShoppingScreen(char pressedKey) {
+  // Change state to Shopping to make other controls disabled (easter eggs and alternate screen)
   if (screenStateShopping == false) {
     screenStateShopping = true;
   }
+  // Cancel all. Return all variables to default
   if (pressedKey == '#') {
-    // Cancel all. Return all variables to default
-    screenStateShopping = false;
-    customerNumber = "";
-    productNumber = "";
-    customerMode = true;
-    screenStateEasterEggShouldPlay = false;
-    defaultScreenInfo();
+    resetState();
     return;
   }
+  // Enter customer number - Part 1
   if (customerMode == true) {
+    // If pressed Confirm "*", attempt to transition to product state
     if (pressedKey == '*') {
       if (customerNumber == "") {
-        // Empty customer, cannot proceed     
+        // Empty customer, cannot proceed, nothing happens.
       } else {
         customerMode = false;
-        display.clear();
-        display.setFont(ArialMT_Plain_16);
-        display.setTextAlignment(TEXT_ALIGN_CENTER);
-        display.drawString(64, 20, "Probíhá HTTP dotaz.");
-        display.display();
-        display.clear();
-        display.setFont(ArialMT_Plain_16);
-        display.setTextAlignment(TEXT_ALIGN_CENTER);
-        display.drawString(64, 0, "Zvolte ID produktu");
-        display.setFont(ArialMT_Plain_10);
-        display.setTextAlignment(TEXT_ALIGN_LEFT);
-        display.drawString(0, 36, "Zákazník: " + makeHttpRequest());
-        display.drawString(0, 48, "Storno stiskem    #");
-        display.display();
+        // If customer starts with 0, skip name check
+        String zeroChar = "00"; // Seriously C? How do I do this normal way?
+        if ((customerNumber.charAt(0)) != (zeroChar.charAt(0))) {
+          // Standard way - HTTP GET customer name
+          drawHttpRequest();
+          drawChooseProduct(true);
+        } else {
+          // Prefix with 0 - Do NOT HTTP GET customer name - saves some time especially on slower network
+          customerNumber.remove(0,1);
+          drawChooseProduct(false);
+        }
       }
     } else {
+      // Keep adding additional characters to customerNumber
       customerNumber += pressedKey;
-      display.clear();
-      display.setFont(ArialMT_Plain_16);
-      display.setTextAlignment(TEXT_ALIGN_CENTER);
-      display.drawString(64, 0, "ID zákazníka");
-      display.setTextAlignment(TEXT_ALIGN_LEFT);
-      display.drawString(0, 18, customerNumber);
-      display.setFont(ArialMT_Plain_10);
-      display.drawString(0, 36, "Potvrd' stiskem");
-      display.setFont(ArialMT_Plain_24);
-      display.drawString(77, 36, "*");
-      display.setFont(ArialMT_Plain_10);
-      display.drawString(0, 48, "Storno stiskem    #");
-      display.display();
+      drawEnterCustomerNumber();
     }
+    // Super secret evil game menu. Begone believers in god!
     if (customerNumber == "666") {
       customerNumber = "";
       productNumber = "";
@@ -237,6 +197,8 @@ void updateShoppingScreen(char pressedKey) {
       gameMenuMode = true;
       gameMenu();
     }
+  } else {
+    // Handle key press which launches order API
   }
 }
 
@@ -273,17 +235,11 @@ void setup() {
     drawProgressBar(counter);
     counter++;
   }
-
+  
   // Wifi connected - Show great success
-  display.clear();
-  display.setFont(ArialMT_Plain_24);
-  display.drawString(64, 20, "Connected!");
-  display.display();
+  drawWifiConnected();
   delay(1500);
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+  
   IpAddressStr = WiFi.localIP().toString();
   defaultScreenInfo();
 
@@ -315,8 +271,8 @@ void loop() {
     }
   }
   if (customKey){
-    Serial.println("Key pressed");
-    Serial.println(customKey);
+    // Serial.println("Key pressed");
+    // Serial.println(customKey);
     // Do stuff when pressed stuff
     if (gameMenuMode) {
       gameMenuPress(customKey);

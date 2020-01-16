@@ -19,6 +19,7 @@ int nTail; // Integer counting body length
 enum eDirection { STOP = 0, LEFT, RIGHT, UP, DOWN}; // ENUM letting game know which direction is snake heading
 eDirection dir; // direction holding enum value
 Ticker snakeSpeed; // ticker dictates how fast snake travels
+String snakeUrl;
 void snakeSetup() {
   snakeGameOver = false;
   std::fill_n(tailX, 416, 129); // New array blinked at 0,0 and previous games blinked in previous array position. This way it blinks outside of LCD
@@ -65,7 +66,7 @@ void gameOver() {
         display.display();
         delay(2000);
     } else {
-      snakeUrl = defaultSnakeUrl;
+      snakeUrl = getSnakeHighscoresApi;
       snakeUrl += score;
       client.print(String("GET ") + snakeUrl + " HTTP/1.1\r\n" +
                "Host: " + host + "\r\n" +
