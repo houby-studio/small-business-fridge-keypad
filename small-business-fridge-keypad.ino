@@ -46,7 +46,7 @@ Keypad customKeypad = Keypad( makeKeymap(hexaKeys), rowPins, colPins, ROWS, COLS
 const String host = "lednice.prdelka.eu";
 const int httpPort = 80;
 const String getCustomerNameApi = "/api/customerName?customer=";
-const String postShopOrderApi = "/api/keypadOrder";
+const String postKeypadOrderApi = "/api/keypadOrder";
 const String getSnakeHighscoresApi = "/api/snakeHighscores";
 const String postSnakeHighscoresApi = "/api/snakeHighscores";
 const String apiSecret = "secret";
@@ -74,17 +74,16 @@ SSD1306Wire  display(0x3c, D3, D5);
 
 // Shopping variables
 String customerNumber = "";
-String productNumber = "";
 bool customerMode = true;
 
 // Secret variables
 bool gameMenuMode = false;
 int gameMenuSelect = 1;
 
+// Restarts variables to its default state and displays default screen
 void resetState() {
   screenStateShopping = false;
   customerNumber = "";
-  productNumber = "";
   customerMode = true;
   screenStateEasterEggShouldPlay = false;
   defaultScreenInfo();
@@ -163,17 +162,16 @@ void updateShoppingScreen(char pressedKey) {
     resetState();
     return;
   }
-  // Enter customer number - Part 1
+  // Enter customer number
   if (customerMode == true) {
-    // If pressed Confirm "*", attempt to transition to product state
+    // If pressed Confirm "*", attempt to transition to product order state
     if (pressedKey == '*') {
       if (customerNumber == "") {
         // Empty customer, cannot proceed, nothing happens.
       } else {
         customerMode = false;
         // If customer starts with 0, skip name check
-        String zeroChar = "00"; // Seriously C? How do I do this normal way?
-        if ((customerNumber.charAt(0)) != (zeroChar.charAt(0))) {
+        if ((customerNumber.charAt(0)) != '0') {
           // Standard way - HTTP GET customer name
           drawHttpRequest();
           drawChooseProduct(true);
@@ -191,14 +189,18 @@ void updateShoppingScreen(char pressedKey) {
     // Super secret evil game menu. Begone believers in god!
     if (customerNumber == "666") {
       customerNumber = "";
-      productNumber = "";
       screenStateEasterEggShouldPlay = false;
       screenStateEasterEgg = true;
       gameMenuMode = true;
       gameMenu();
     }
   } else {
-    // Handle key press which launches order API
+    // Handle key press which launches product order API
+    if (pressedKey == '*') {
+      // Invalid key, do nothing.
+    }
+    drawHttpRequest();
+    postKeypadOrder(pressedKey);
   }
 }
 
@@ -251,6 +253,7 @@ void setup() {
   displayEasterEgg.attach(35, changeEasterEggState);
 }
 
+// Main loop
 void loop() {
   char customKey = customKeypad.getKey();
   if (!customKey) {

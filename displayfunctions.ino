@@ -1,4 +1,4 @@
-// Shows 'Connecting to:' and SSID underneath on startup and connecting to WiFi
+// Shows 'Connecting to:' and SSID underneath on startup and connecting to WiFi on power on
 void drawConnectingTo() {
   String ssidString = String(ssid);
   display.clear();
@@ -19,7 +19,7 @@ void drawProgressBar(int x) {
   display.display();
 }
 
-// Show 'Powered by' loaded letter by letter
+// Show 'Powered by' loaded letter by letter - intro on power on
 void drawPoweredBy() {
     const int horalign = 0;
     const int veralign = 20; 
@@ -39,13 +39,14 @@ void drawPoweredBy() {
     delay(750);
 }
 
-// Display Image Prdel Logo
+// Display Image Prdel Logo after 'Powered on' on power on
 void drawPrdelLogo() {
     display.clear();
     display.drawXbm(0, 0, prdel_width, prdel_height, prdel_bits);
     display.display();
 }
 
+// Handle displaying default alternating screen
 void defaultScreenInfo() {
   // If screen is displaying easter egg or if someone is shopping, dont override screen
   if (screenStateEasterEgg == true || screenStateShopping == true) {
@@ -74,6 +75,7 @@ void defaultScreenInfo() {
   display.display();
 }
 
+// Displays super secret game menu
 void gameMenu() {
   display.clear();
   display.setFont(ArialMT_Plain_10);
@@ -95,6 +97,7 @@ void gameMenu() {
   display.display();
 }
 
+// Displays HTTP Request to show customer something is happening
 void drawHttpRequest() {
   display.clear();
   display.setFont(ArialMT_Plain_16);
@@ -103,6 +106,7 @@ void drawHttpRequest() {
   display.display();
 }
 
+// Displays product choice menu after customer has been set
 void drawChooseProduct(bool makeHttpRequest) {
   display.clear();
   display.setFont(ArialMT_Plain_16);
@@ -112,14 +116,17 @@ void drawChooseProduct(bool makeHttpRequest) {
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   display.drawString(0, 48, "Storno stiskem    #");
   if (makeHttpRequest) {
+    // Invokes GET customerName API to retrieve name - webservice may reset everything if customer is not found
     display.drawString(0, 36, "Zákazník: ");
     display.drawString(48, 36, getCustomerName());
   } else {
+    // If customer name started with '0' do not invoke web request
     display.drawString(0, 36, "Zákazník: " + customerNumber);
   }
   display.display();
 }
 
+// Displays customer selection screen
 void drawEnterCustomerNumber() {
   display.clear();
   display.setFont(ArialMT_Plain_16);
@@ -136,6 +143,7 @@ void drawEnterCustomerNumber() {
   display.display();  
 }
 
+// Displays 'Connected!' when device connects to Wi-fi
 void drawWifiConnected() {
   display.clear();
   display.setFont(ArialMT_Plain_24);
@@ -143,20 +151,41 @@ void drawWifiConnected() {
   display.display();
 }
 
-void drawCustomerNotFound() {
+// Displays 'Customer/Product not found or Product not on stock' when standard API returns 404 return value
+void drawApiStandardError(int errorType) {
   display.clear();
   display.setFont(ArialMT_Plain_16);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
-  display.drawString(64, 10, "Zákazník");
-  display.drawString(64, 30, "nenalezen");
-  display.display();
+  if (errorType == 1) {
+    display.drawString(64, 10, "Zákazník");
+    display.drawString(64, 30, "nenalezen");
+  } else if (errorType == 2) {
+    display.drawString(64, 10, "Produkt");
+    display.drawString(64, 30, "nenalezen");
+  } else {
+    display.drawString(64, 10, "Produkt");
+    display.drawString(64, 30, "není skladem");
+  }
+  display.display();    
 }
 
+// Displays 'Error' when HTTP Request terminates with non-standard error i.e. website or connection is down
 void drawTerminatingError() {
   display.clear();
   display.setFont(ArialMT_Plain_16);
   display.setTextAlignment(TEXT_ALIGN_CENTER);
   display.drawString(64, 10, "Hasta");
   display.drawString(64, 30, "la vista");
+  display.display();
+}
+
+// a
+void drawProductBought(const char* productName, const int productPrice) {
+  display.clear();
+  display.setFont(ArialMT_Plain_16);
+  display.setTextAlignment(TEXT_ALIGN_CENTER);
+  display.drawString(64, 0, "Zakoupil jste");
+  display.drawString(64, 20, productName);
+  display.drawString(64, 40, String(productPrice) + ",-");
   display.display();
 }
