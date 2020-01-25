@@ -179,7 +179,7 @@ void drawTerminatingError() {
   display.display();
 }
 
-// a
+// Displays success message with product name and price
 void drawProductBought(const char* productName, const int productPrice) {
   display.clear();
   display.setFont(ArialMT_Plain_16);
